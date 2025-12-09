@@ -1,0 +1,51 @@
+// Stoichiometry Sprint — short JS
+(function(){
+  const startBtn = document.getElementById('start');
+  const checkBtn = document.getElementById('check');
+  const skipBtn = document.getElementById('skip');
+  const qDiv = document.getElementById('question');
+  const ans = document.getElementById('answer');
+  const fb = document.getElementById('feedback');
+  const scoreEl = document.getElementById('score');
+
+  let current=null, score=0;
+
+  const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+
+  function gen(){
+    const a=rnd(1,3), b=rnd(1,3), c=rnd(1,3);
+    const MA=rnd(18,200), MB=rnd(18,200), MC=rnd(18,200);
+    const gA=rnd(5,150);
+    const molesA=gA/MA;
+    const gC=molesA*(c/a)*MC;
+    return {a,b,c,MA,MB,MC,gA,ans:gC};
+  }
+
+  function show(q){
+    qDiv.innerHTML=`<strong>Reaction:</strong> ${q.a} A (M=${q.MA}) + ${q.b} B (M=${q.MB}) → ${q.c} C (M=${q.MC})<br>
+    <strong>Given:</strong> ${q.gA} g of A<br><strong>Find:</strong> grams of C produced.`;
+  }
+
+  function newQ(){
+    current=gen(); show(current);
+    ans.value=""; ans.focus(); fb.textContent="";
+    checkBtn.disabled=false; skipBtn.disabled=false;
+  }
+
+  startBtn.onclick=()=>{score=0; scoreEl.textContent="Score: 0"; newQ();};
+
+  checkBtn.onclick=()=>{
+    if(!current) return;
+    const u=parseFloat(ans.value);
+    if(isNaN(u)){ fb.textContent="Enter a number."; return; }
+    const diff=Math.abs(u-current.ans);
+    if(diff<=0.2){ score+=10; fb.textContent=`Correct! ≈ ${current.ans.toFixed(2)} g`; }
+    else{ score-=2; fb.textContent=`Wrong. Correct ≈ ${current.ans.toFixed(2)} g`; }
+    scoreEl.textContent="Score: "+score;
+    checkBtn.disabled=true;
+  };
+
+  skipBtn.onclick=()=>newQ();
+
+  ans.onkeydown=e=>{ if(e.key==="Enter" && !checkBtn.disabled) checkBtn.click(); };
+})();
