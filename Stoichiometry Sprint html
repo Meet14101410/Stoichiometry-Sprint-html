@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Stoichiometry Sprint (Short)</title>
+  <style>
+    :root{--bg:#0f172a;--card:#0b1220;--accent:#06b6d4;--muted:#94a3b8}
+    body{font-family:system-ui,Segoe UI,Roboto,"Helvetica Neue",Arial;background:var(--bg);color:#eef2ff;display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+    .card{background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));padding:18px;border-radius:12px;width:360px;box-shadow:0 6px 20px rgba(2,6,23,0.6)}
+    h1{margin:0 0 8px;font-size:20px}
+    p.muted{color:var(--muted);margin:6px 0 12px;font-size:13px}
+    .row{display:flex;gap:8px;align-items:center}
+    button{background:var(--accent);border:none;padding:8px 12px;border-radius:8px;color:#042028;font-weight:600;cursor:pointer}
+    input[type=number]{flex:1;padding:8px;border-radius:8px;border:1px solid #0c1720;background:#031018;color:#dff7fb}
+    .info{margin-top:12px;font-size:13px}
+    .score{float:right;font-weight:700}
+    .small{font-size:12px;color:var(--muted)}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>Stoichiometry Sprint <span class="score" id="score">Score: 0</span></h1>
+    <p class="muted">Quick stoichiometry challenges — convert reactant mass → product mass using mole ratios.</p>
+
+    <div id="question" style="margin:12px 0;padding:12px;background:#021426;border-radius:8px">Press Start to begin.</div>
+
+    <div class="row">
+      <input id="answer" type="number" placeholder="Your answer (g)" step="any" />
+      <button id="check" disabled>Check</button>
+    </div>
+
+    <div class="row" style="margin-top:10px">
+      <button id="start">Start</button>
+      <button id="skip" disabled>Skip</button>
+      <div style="flex:1;text-align:right" class="small">Tolerance: ±0.2 g</div>
+    </div>
+
+    <div class="info" id="feedback"></div>
+  </main>
+
+<script>
+(function(){
+  const startBtn = document.getElementById('start');
+  const checkBtn = document.getElementById('check');
+  const skipBtn = document.getElementById('skip');
+  const qDiv = document.getElementById('question');
+  const ansInput = document.getElementById('answer');
+  const fb = document.getElementById('feedback');
+  const scoreSpan = document.getElementById('score');
+
+  let current = null; let score = 0;
+
+  function rndInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+
+  function genQuestion(){
+    // Generate a simple reaction: aA + bB -> cC. We'll ask: given grams of A, how many grams of C?
+    const a = rndInt(1,3); const b = rndInt(1,3); const c = rndInt(1,3);
+    const molMassA = rndInt(18,200); const molMassB = rndInt(18,200); const molMassC = rndInt(18,200);
+    const gramsA = rndInt(5,150);
+    // Stoichiometric calculation: molesA = gramsA / M_A; using ratio to find molesC = molesA * (c/a); gramsC = molesC * M_C
+    const molesA = gramsA / molMassA;
+    const molesC = molesA * (c / a);
+    const gramsC = molesC * molMassC;
+    return {
+      a,b,c, molMassA,molMassB,molMassC, gramsA,
+      answer: gramsC
+    }
+  }
+
+  function render(q){
+    qDiv.innerHTML = `<strong>Reaction:</strong> ${q.a} A (M=${q.molMassA} g/mol) + ${q.b} B (M=${q.molMassB} g/mol) → ${q.c} C (M=${q.molMassC} g/mol)
+      <br><strong>Given:</strong> ${q.gramsA} g of A. <br> <strong>Find:</strong> mass of C produced (in g).`;
+  }
+
+  function newRound(){
+    current = genQuestion();
+    render(current);
+    ansInput.value=''; ansInput.focus();
+    checkBtn.disabled=false; skipBtn.disabled=false; fb.textContent='';
+  }
+
+  startBtn.addEventListener('click', ()=>{ score=0; scoreSpan.textContent='Score: 0'; newRound(); });
+
+  checkBtn.addEventListener('click', ()=>{ if(!current) return; const user = parseFloat(ansInput.value); if(isNaN(user)){fb.textContent='Enter a numeric answer.'; return;} const correct = current.answer; const tol = 0.2; if(Math.abs(user - correct) <= tol){ score += 10; fb.textContent = `Correct! Answer ≈ ${correct.toFixed(2)} g.`; } else { score -= 2; fb.textContent = `Incorrect. Correct ≈ ${correct.toFixed(2)} g.`; } scoreSpan.textContent = 'Score: '+score; checkBtn.disabled=true; skipBtn.disabled=false; });
+
+  skipBtn.addEventListener('click', ()=>{ newRound(); });
+
+  // allow Enter to check
+  ansInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter' && !checkBtn.disabled) checkBtn.click(); });
+
+})();
+</script>
+</body>
+</html>
